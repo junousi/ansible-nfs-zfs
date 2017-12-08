@@ -1,0 +1,47 @@
+---
+- name: Install zfs, configure scrubs, enable rudimentary NFS share
+  hosts: all
+  become: true
+  vars:
+    - zfs_create_filesystems: true
+    - zfs_create_pools: true
+    - zfs_create_volumes: true
+    - zfs_manage_filesystem_permissions: true
+    - zfs_enable_auto_snapshots: true
+    - zfs_enable_nfs: true
+    - zfs_pools:
+      - name: tank
+        action: create
+        atime: off
+        compression: lz4
+        devices: #TODO
+          - vdb
+        type: basic
+        state: present
+    - zfs_filesystems:
+      - name: nfs
+        pool: tank
+        atime: off
+        compression: lz4
+        logbias: latency
+        mountpoint: /tank/nfs #TODO
+        sharenfs: rw=@192.168.1.0/24 #TODO
+        state: present
+        sync: always
+    - zfs_pools_scrub_cron:
+        minute: 0
+        hour: 0
+        day: '*'
+        month: '*'
+        weekday: sun
+    - zfs_enable_monitoring: True
+    - zfs_monitoring_capacity_threshold: 80
+    - zfs_monitoring_scrub_max_age: 8
+    - zfs_monitoring_email_dest: jukka.nousiainen@iki.fi #TODO
+  roles:
+    - ansible-zfs
+  post_tasks: #TODO
+    - lineinfile:
+        path: /etc/exports
+        line: "/tank/nfs 192.168.1.0/24(rw,sync)"
+    - shell: exportfs -a
