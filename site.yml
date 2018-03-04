@@ -42,6 +42,7 @@
   roles:
     - ansible-zfs
   post_tasks:
+    - shell: zpool create tank /dev/vdb1 -f
     - shell: zpool set feature@encryption=enabled tank
     - shell: 'echo "{{zfs_key}}" > /dev/shm/enc2key'
     - shell: "zfs create -o encryption=aes-128-gcm -o keyformat=hex -o keylocation=file:///dev/shm/enc2key -o atime=off -o logbias=latency -o mountpoint=/tank/nfs -o sharenfs=rw=@{{openstack_project_subnet}} -o sync=always tank/nfs"
