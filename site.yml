@@ -1,47 +1,53 @@
 ---
-- name: Install zfs, configure scrubs, enable rudimentary NFS share
+- name: Install zfs + configure scrubs + enable NFS share
   hosts: all
   become: true
-  vars:
-    - zfs_create_filesystems: true
-    - zfs_create_pools: true
-    - zfs_create_volumes: true
-    - zfs_manage_filesystem_permissions: true
-    - zfs_enable_auto_snapshots: true
-    - zfs_enable_nfs: true
-    - zfs_pools:
-      - name: tank
-        action: create
-        atime: off
-        compression: lz4
-        devices: #TODO
-          - vdb
-        type: basic
-        state: present
-    - zfs_filesystems:
-      - name: nfs
-        pool: tank
-        atime: off
-        compression: lz4
-        logbias: latency
-        mountpoint: /tank/nfs #TODO
-        sharenfs: rw=@192.168.1.0/24 #TODO
-        state: present
-        sync: always
-    - zfs_pools_scrub_cron:
-        minute: 0
-        hour: 0
-        day: '*'
-        month: '*'
-        weekday: sun
-    - zfs_enable_monitoring: True
-    - zfs_monitoring_capacity_threshold: 80
-    - zfs_monitoring_scrub_max_age: 8
-    - zfs_monitoring_email_dest: jukka.nousiainen@iki.fi #TODO
+  pre_tasks:
+    - shell: apt-get install -y linux-headers-$(uname -r) build-essential autoconf libtool gawk alien fakeroot zlib1g-dev uuid-dev libattr1-dev libblkid-dev libselinux-dev libudev-dev libssl-dev parted lsscsi ksh automake
+    - shell: git clone {{item}}
+      with_items:
+        - https://github.com/zfsonlinux/spl
+        - https://github.com/zfsonlinux/zfs
+      ignore_errors: true
+    - shell: cd spl; git checkout master; ./autogen.sh; ./configure; make; make install
+      args:
+        creates: /usr/local/src/spl-0.7.0
+    - shell: cd zfs; git checkout master; ./autogen.sh; ./configure --prefix=/usr; make; make install
+      args:
+        creates: /usr/sbin/zpool
+    - shell: "modprobe -r {{item}}"
+      with_items: 
+        - splat
+        - zfs
+        - zavl
+        - zcommon
+        - zunicode
+        - znvpair
+        - icp
+        - zlua
+        - spl
+    - shell: "cd /lib/modules/$(uname -r)/extra; insmod {{item}}"
+      with_items: 
+        - unicode/zunicode.ko 
+        - spl/spl.ko
+        - nvpair/znvpair.ko 
+        - zcommon/zcommon.ko 
+        - lua/zlua.ko
+        - icp/icp.ko 
+        - avl/zavl.ko 
+        - zfs/zfs.ko
+    - shell: parted -a optimal /dev/vdb mkpart primary zfs 0% 100%
+      args:
+        creates: /dev/vdb1    
   roles:
     - ansible-zfs
-  post_tasks: #TODO
+  post_tasks:
+    - shell: zpool set feature@encryption=enabled tank
+    - shell: 'echo "{{zfs_key}}" > /dev/shm/enc2key'
+    - shell: "zfs create -o encryption=aes-128-gcm -o keyformat=hex -o keylocation=file:///dev/shm/enc2key -o atime=off -o logbias=latency -o mountpoint=/tank/nfs -o sharenfs=rw=@{{openstack_project_subnet}} -o sync=always tank/nfs"
+      args:
+        creates: /tank/nfs
     - lineinfile:
         path: /etc/exports
-        line: "/tank/nfs 192.168.1.0/24(rw,sync)"
+        line: "/tank/nfs {{openstack_project_subnet}}(rw,sync)"
     - shell: exportfs -a

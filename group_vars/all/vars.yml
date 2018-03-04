@@ -1,0 +1,44 @@
+---
+### non-role vars
+
+openstack_project_subnet: 192.168.1.0/24
+zfs_key: "{{vault_zfs_key}}"
+
+### role vars
+
+zfs_create_pools: true
+#zfs_create_filesystems: true
+#zfs_create_volumes: true
+zfs_manage_filesystem_permissions: true
+zfs_enable_auto_snapshots: true
+zfs_enable_nfs: true
+zfs_enable_monitoring: True
+zfs_monitoring_capacity_threshold: 80
+zfs_monitoring_scrub_max_age: 8
+zfs_monitoring_email_dest:
+zfs_pools:
+  - name: tank
+    action: create
+    atime: off
+    #compression: lz4
+    devices:
+      - vdb
+    type: basic
+    state: present
+zfs_pools_scrub_cron:
+  minute: 0
+  hour: 0
+  day: '*'
+  month: '*'
+  weekday: sun
+#zfs_filesystems:
+#  - name: nfs
+#    pool: tank
+#    atime: off
+#    #compression: lz4
+#    logbias: latency
+#    mountpoint: /tank/nfs
+#    sharenfs: rw=@{{openstack_project_subnet}}
+#    state: present
+#    sync: always
+#    force: true
