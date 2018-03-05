@@ -1,4 +1,3 @@
 vault.yml
 *.retry
 inventory.txt
-roles

@@ -1,13 +1,14 @@
 ---
-- name: Build ZFS, enable nfs-kernel-server, create encrypted dataset, export it
+- name: Build ZFS, load modules, create pool, create encrypted dataset, export it via NFS.
   hosts: all
   become: true
-  pre_tasks:
-    - shell: apt-get install -y linux-headers-$(uname -r) build-essential autoconf libtool gawk alien fakeroot zlib1g-dev uuid-dev libattr1-dev libblkid-dev libselinux-dev libudev-dev libssl-dev parted lsscsi ksh automake
+  tasks:
+    - shell: apt-get install -y linux-headers-$(uname -r) build-essential autoconf libtool gawk alien fakeroot zlib1g-dev uuid-dev libattr1-dev libblkid-dev libselinux-dev libudev-dev libssl-dev parted lsscsi ksh automake nfs-kernel-server python-pip python-setuptools pv pigz
     - shell: git clone {{item}}
       with_items:
         - https://github.com/zfsonlinux/spl
         - https://github.com/zfsonlinux/zfs
+        - https://github.com/zfsonlinux/zfs-auto-snapshot
       ignore_errors: true
     - shell: cd spl; git checkout master; ./autogen.sh; ./configure; make; make install
       args:
@@ -15,6 +16,7 @@
     - shell: cd zfs; git checkout master; ./autogen.sh; ./configure --prefix=/usr; make; make install
       args:
         creates: /usr/sbin/zpool
+    - shell: cd zfs-auto-snapshot; make install
     - shell: "modprobe -r {{item}}"
       with_items: 
         - splat
@@ -38,18 +40,22 @@
         - avl/zavl.ko 
         - zfs/zfs.ko
       ignore_errors: true
-  roles:
-    - ansible-zfs
-  post_tasks:
     - shell: zpool create tank /dev/vdb -f
       args:
         creates: /tank
     - shell: zpool set feature@encryption=enabled tank
     - shell: "echo {{zfs_key}} > {{zfs_key_location}}"
-    - shell: "zfs create -o encryption=aes-128-gcm -o keyformat=hex -o keylocation=file://{{zfs_key_location}} -o atime=off -o logbias=latency -o mountpoint=/tank/nfs -o sharenfs=rw=@{{openstack_project_subnet}} -o sync=always tank/nfs"
+    - shell: 'zfs create -o encryption=aes-256-gcm -o keyformat=hex -o keylocation=file://{{zfs_key_location}} -o sharenfs="rw=@{{openstack_project_subnet}}" tank/nfs'
       args:
         creates: /tank/nfs
-    - lineinfile:
-        path: /etc/exports
-        line: "/tank/nfs {{openstack_project_subnet}}(rw,sync)"
-    - shell: exportfs -a
+    - shell: pip install z3
+    - shell: mkdir -p /etc/z3_backup
+    - template: 
+        src: templates/z3.conf.j2
+        dest: /etc/z3_backup/z3.conf
+        owner: root
+        group: root
+        mode: 0600
+    - shell: sed -i s/\'is_full\'/\'is-full\'/ /usr/local/lib/python2.7/dist-packages/z3/snap.py
+    - shell: sed -i s/\"is_full/\"is-full/ /usr/local/lib/python2.7/dist-packages/z3/snap.py
+
