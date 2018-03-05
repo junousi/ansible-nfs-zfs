@@ -1,5 +1,5 @@
 ---
-- name: Install zfs + configure scrubs + enable NFS share
+- name: Build ZFS, enable nfs-kernel-server, create encrypted dataset, export it
   hosts: all
   become: true
   pre_tasks:
@@ -18,7 +18,6 @@
     - shell: "modprobe -r {{item}}"
       with_items: 
         - splat
-        - zfs
         - zavl
         - zcommon
         - zunicode
@@ -26,6 +25,8 @@
         - icp
         - zlua
         - spl
+        - zfs
+      ignore_errors: true
     - shell: "cd /lib/modules/$(uname -r)/extra; insmod {{item}}"
       with_items: 
         - unicode/zunicode.ko 
@@ -36,16 +37,16 @@
         - icp/icp.ko 
         - avl/zavl.ko 
         - zfs/zfs.ko
-    - shell: parted -a optimal /dev/vdb mkpart primary zfs 0% 100%
-      args:
-        creates: /dev/vdb1    
+      ignore_errors: true
   roles:
     - ansible-zfs
   post_tasks:
-    - shell: zpool create tank /dev/vdb1 -f
+    - shell: zpool create tank /dev/vdb -f
+      args:
+        creates: /tank
     - shell: zpool set feature@encryption=enabled tank
-    - shell: 'echo "{{zfs_key}}" > /dev/shm/enc2key'
-    - shell: "zfs create -o encryption=aes-128-gcm -o keyformat=hex -o keylocation=file:///dev/shm/enc2key -o atime=off -o logbias=latency -o mountpoint=/tank/nfs -o sharenfs=rw=@{{openstack_project_subnet}} -o sync=always tank/nfs"
+    - shell: "echo {{zfs_key}} > {{zfs_key_location}}"
+    - shell: "zfs create -o encryption=aes-128-gcm -o keyformat=hex -o keylocation=file://{{zfs_key_location}} -o atime=off -o logbias=latency -o mountpoint=/tank/nfs -o sharenfs=rw=@{{openstack_project_subnet}} -o sync=always tank/nfs"
       args:
         creates: /tank/nfs
     - lineinfile:

@@ -3,6 +3,7 @@
 
 openstack_project_subnet: 192.168.1.0/24
 zfs_key: "{{vault_zfs_key}}"
+zfs_key_location: /dev/shm/enc2key
 
 ### role vars
 
@@ -11,7 +12,6 @@ zfs_key: "{{vault_zfs_key}}"
 #zfs_create_volumes: true
 zfs_manage_filesystem_permissions: true
 ### TEMPORARY! Disable so it won't pull in old libzpool
-#zfs_enable_auto_snapshots: true
 zfs_enable_auto_snapshots: false
 zfs_enable_nfs: true
 zfs_enable_monitoring: True
