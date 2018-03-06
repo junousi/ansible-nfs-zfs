@@ -3,7 +3,47 @@ openstack_project_subnet: 192.168.1.0/24
 
 zfs_key: "{{vault_zfs_key}}"
 zfs_key_location: /dev/shm/enc2key
+zpool_device: /dev/vdb
 
-s3_bucket: nfs-zfs-test
 backup_source_dataset: tank/nfs
 backup_dest_host: object.pouta.csc.fi
+backup_dest_bucket: nfs-zfs-test
+
+pkg_dependencies:
+# for zfs build
+  - linux-headers-{{ansible_kernel}}
+  - build-essential
+  - autoconf
+  - libtool
+  - gawk
+  - alien
+  - fakeroot
+  - zlib1g-dev
+  - uuid-dev
+  - libattr1-dev
+  - libblkid-dev
+  - libselinux-dev
+  - libudev-dev
+  - libssl-dev
+  - parted
+  - lsscsi
+  - ksh
+  - automake
+# for z3
+  - python-pip
+  - python-setuptools
+  - pv
+  - pigz
+# for NFS shares
+  - nfs-kernel-server
+
+zfs_modules:
+  - unicode/zunicode.ko
+  - spl/spl.ko
+  - nvpair/znvpair.ko
+  - zcommon/zcommon.ko
+  - lua/zlua.ko
+  - icp/icp.ko
+  - avl/zavl.ko
+  - zfs/zfs.ko
+

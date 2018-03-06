@@ -1,8 +1,8 @@
 [main]
-BUCKET={{s3_bucket}}
-S3_KEY_ID={{vault_s3_key_id}}
-S3_SECRET={{vault_s3_secret}}
-S3_PREFIX={{vault_s3_prefix}}
-FILESYSTEM={{backup_source_dataset}}
+S3_KEY_ID={{ vault_s3_key_id }}
+S3_SECRET={{ vault_s3_secret }}
+S3_PREFIX={{ vault_s3_prefix }}
+FILESYSTEM={{ backup_source_dataset }}
+HOST={{ backup_dest_host }}
+BUCKET={{ backup_dest_bucket }}
 SNAPSHOT_PREFIX=zfs-auto-snap_daily
-HOST={{backup_dest_host}}
