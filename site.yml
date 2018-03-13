@@ -34,7 +34,7 @@
       when: modinfo_zfs.rc != 0
 
     - name: Create ZFS pool
-      shell: zpool create tank {{ zpool_device }} -f
+      shell: zpool create tank {{ zpool_device }}
       args:
         creates: /tank
     - name: Enable encryption on zpool
