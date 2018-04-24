@@ -34,6 +34,7 @@ pkg_dependencies:
   - python-setuptools
   - pv
   - pigz
+  - kmod
 # for NFS shares
   - nfs-kernel-server
 
