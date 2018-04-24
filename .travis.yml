@@ -48,4 +48,4 @@ after_script:
   - docker rm -v $DOCKER_CONTAINER_ID
 
 notifications:
-  email: false
+  email: true
