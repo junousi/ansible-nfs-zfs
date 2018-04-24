@@ -36,7 +36,8 @@ RUN \
   apt-get install -y byobu curl git htop man unzip vim wget python-pip tree && \
   apt-get install -y libyaml-dev python-dev python-jinja2 python-httplib2 python-keyczar python-paramiko python-setuptools python3-setuptools && \
   apt-get install -y libffi-dev libssl-dev && \
-  pip install setuptools passlib dnspython
+  pip install setuptools --upgrade && \
+  pip install passlib dnspython
 
 RUN mkdir /etc/ansible/
 RUN echo -e '[local]\nlocalhost' > /etc/ansible/hosts
