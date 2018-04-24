@@ -70,10 +70,12 @@
 # ZFS Encryption at Rest configuration is carried in dataset properties.
 # The dataset properties are included only when issuing zfs send -p.
 # Let's force -p to all send operations.
-    - name: Enable zfs send with properties
+    - name: Enable zfs send with properties 1/3 sed
       shell: sed -i "s/zfs send -i/zfs send -p -i/" /usr/local/lib/python2.7/dist-packages/z3/snap.py
-    - shell: sed -i "s/zfs send -n/zfs send -p -n/" /usr/local/lib/python2.7/dist-packages/z3/snap.py
-    - shell: sed -i "s/zfs send '/zfs send -p '/" /usr/local/lib/python2.7/dist-packages/z3/snap.py
+    - name: Enable zfs send with properties 2/3 sed
+      shell: sed -i "s/zfs send -n/zfs send -p -n/" /usr/local/lib/python2.7/dist-packages/z3/snap.py
+    - name: Enable zfs send with properties 3/3 sed
+      shell: sed -i "s/zfs send '/zfs send -p '/" /usr/local/lib/python2.7/dist-packages/z3/snap.py
 
 # Unfortunately using -p also yields following bug/issue:
 #
