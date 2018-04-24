@@ -37,6 +37,7 @@ RUN \
   apt-get install -y libyaml-dev python-dev python-jinja2 python-httplib2 python-keyczar python-paramiko python-setuptools python3-setuptools && \
   apt-get install -y libffi-dev libssl-dev && \
   pip install setuptools --upgrade && \
+  pip install pip --upgrade && \
   pip install passlib dnspython
 
 RUN mkdir /etc/ansible/
